@@ -1,0 +1,197 @@
+package game;
+
+import com.senac.SimpleJava.Console;
+import com.senac.SimpleJava.Graphics.Canvas;
+import com.senac.SimpleJava.Graphics.Color;
+import com.senac.SimpleJava.Graphics.GraphicApplication;
+import com.senac.SimpleJava.Graphics.Point;
+import com.senac.SimpleJava.Graphics.Resolution;
+import com.senac.SimpleJava.Graphics.Sprite;
+import com.senac.SimpleJava.Graphics.events.KeyboardAction;
+
+
+public class Arkanoid extends GraphicApplication {
+	
+	private Bola bola;
+	private Sprite paddel;
+	private int qtdQuadrado = Resolution.MSX.width/24;
+	private Bloco[][] quadrado = new Bloco[4][qtdQuadrado];
+	private int numQuadrado = 4 * qtdQuadrado;
+	private int nivel = 3;
+	private String msg = "";
+	private String msgS = "";
+	private boolean jogando = true;
+	private int temporizador = 0;
+	private int life = 30;
+	private int score = 0;
+	private int highscore = 0;
+	
+	protected void draw(Canvas canvas) {		
+		canvas.clear();
+		
+		bola.draw(canvas);
+		for(int y = 0;y < 4;y++){
+			for(int i = 0;i < qtdQuadrado;i++){
+				if(quadrado[y][i].getVisible()){
+					quadrado[y][i].draw(canvas);
+				}
+		}
+		}
+		paddel.draw(canvas);
+		
+		if(msg != ""){
+			canvas.putText(Resolution.MSX.width/2, Resolution.MSX.height/2, 20, msg);
+		}
+		canvas.putText(Resolution.MSX.width/100, Resolution.MSX.height - 10, 10, "VIDA:"+life);
+		canvas.putText(Resolution.MSX.width - 200, Resolution.MSX.height - 10, 10, "HIGHSCORE:"+highscore);
+		canvas.putText(Resolution.MSX.width - 80, Resolution.MSX.height - 10, 10, "SCORE:"+score);
+		
+		
+		
+	}
+
+	
+	protected void setup() {
+		this.setTitle("Arkanoid");
+		this.setResolution(Resolution.MSX);
+		if(nivel != 3){
+			this.setFramesPerSecond(30);
+		}else{
+			this.setFramesPerSecond(50);
+		}
+		bola = new Bola();
+		bola.setPosition(100, 100);
+		int pos = 0;
+		int alt = 10;
+		if(nivel == 1){
+			for(int y = 0;y < 4; y++){
+				for(int i = 0;i < qtdQuadrado;i++){
+					quadrado[y][i] = new Bloco(25, 10, Color.BLUE, 1);
+					quadrado[y][i].setPosition(pos, alt);
+					pos = pos + 25 + 1;
+				}
+				pos = 0;
+				alt = alt + 11;
+			}
+		}else if(nivel == 2){
+			for(int y = 0;y < 4; y++){
+				for(int i = 0;i < qtdQuadrado;i++){
+					quadrado[y][i] = new Bloco(25, 10, Color.RED, 2);
+					quadrado[y][i].setPosition(pos, alt);
+					pos = pos + 25 + 1;
+				}
+				pos = 0;
+				alt = alt + 11;
+			}
+		}else{
+			for(int y = 0;y < 4; y++){
+				for(int i = 0;i < qtdQuadrado;i++){
+					quadrado[y][i] = new Bloco(25, 10, Color.GREEN, 2);
+					quadrado[y][i].setPosition(pos, alt);
+					pos = pos + 25 + 1;
+				}
+				pos = 0;
+				alt = alt + 11;
+			}
+		}
+		paddel = new Paddle();
+		paddel.setPosition(Resolution.MSX.width/2 - 10, Resolution.MSX.height - 25);
+		
+		
+	}
+
+	
+	protected void loop() {
+		
+		if(jogando){
+			bola.move();
+			
+			Point posicao = bola.getPosition();
+			
+			if(posicao.y <= 0 || posicao.y >= Resolution.MSX.height-5){
+				bola.direcaoY();
+			}
+			if(posicao.x <= 0 || posicao.x >= Resolution.MSX.width-5){
+				bola.direcaoX();
+			}
+			for(int y = 0;y < 4;y++){
+				for(int i = 0; i < qtdQuadrado; i++){
+					// Se qualquer teste for verdadeiro, a bola nao bateu no quadrado.
+					if(quadrado[y][i].colisao(bola)){
+						bola.direcaoY();
+						score = score + 100;
+						if(score > highscore){
+							highscore = score;
+						}
+						if(!quadrado[y][i].getVisible()){
+							numQuadrado--;
+						}
+					}
+				}
+			}
+			Console.println(highscore);
+			final Point posicaoPaddle = paddel.getPosition();
+			
+			this.bindKeyPressed("LEFT", new KeyboardAction() {
+				
+				public void handleEvent() {
+					if(posicaoPaddle.x <= 0){
+						paddel.move(0, 0);
+					}else{
+						paddel.move(-3, 0);
+					}
+				}
+				
+			});
+		
+			this.bindKeyPressed("RIGHT", new KeyboardAction() {
+				
+				public void handleEvent() {
+					if(posicaoPaddle.x + 30 >= Resolution.MSX.width){
+						paddel.move(0, 0);
+					}else{
+						paddel.move(+3, 0);
+					}
+				}
+			});
+			
+			
+			if ((posicao.y + bola.getHeight() == posicaoPaddle.y) 
+					&& (posicao.x + bola.getWidth() > posicaoPaddle.x) 
+					&& (posicao.x < posicaoPaddle.x + paddel.getWidth())
+			){
+				bola.direcaoY(); 
+			}
+			
+			
+			if((posicao.y + bola.getHeight()) > (posicaoPaddle.y + paddel.getHeight() + 20)){
+				msg = "Perdeu";
+				bola.setPosition(100, 100);
+				life--;
+			}
+		
+			if(numQuadrado == 0){
+				nivel++;
+				setup();
+				jogando = true;
+			}
+			
+		} else {
+			if(life != 0){
+				if(temporizador == 50){
+					jogando = true;
+					temporizador = 0;
+					msg = "";
+					bola.direcaoY(); 
+				}
+				temporizador++;
+			}
+		}
+		
+		if(msg != ""){
+			jogando = false;
+		}
+		
+		redraw();
+	}
+}

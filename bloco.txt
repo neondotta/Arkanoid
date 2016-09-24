@@ -1,0 +1,50 @@
+package game;
+
+import com.senac.SimpleJava.Graphics.Color;
+import com.senac.SimpleJava.Graphics.Point;
+import com.senac.SimpleJava.Graphics.Rect;
+import com.senac.SimpleJava.Graphics.Resolution;
+import com.senac.SimpleJava.Graphics.Sprite;
+
+public class Bloco extends Sprite {
+
+	private boolean visible = true;
+	private int batidao = 1;
+	
+	public Bloco(int largura, int altura, Color cor, int batidao){
+		super(largura,altura,cor);
+		this.batidao = batidao;
+	}
+	
+	public boolean getVisible(){
+		return this.visible;
+	}
+	
+	public void changeVisibility(){
+		this.visible = false;
+	}
+	
+	
+	
+	public boolean colisao(Bola bola){
+		Rect bolaPosition = bola.getBounds(); // olhar no documentação getBounds e RECT.
+		Rect posicaoQuadrado = this.getBounds();
+		// Se qualquer teste for verdadeiro, a bola nao bateu no quadrado.
+		if(this.getVisible()){
+			if (!((bolaPosition.x >= posicaoQuadrado.x + posicaoQuadrado.width) ||
+					(bolaPosition.x  + bolaPosition.width <= posicaoQuadrado.x) ||
+					(bolaPosition.y >= posicaoQuadrado.y + posicaoQuadrado.height) ||
+					(bolaPosition.y  + bolaPosition.height <= posicaoQuadrado.y))
+			) {
+				batidao--;
+				if(batidao == 0){
+					this.changeVisibility();
+				}
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+}
